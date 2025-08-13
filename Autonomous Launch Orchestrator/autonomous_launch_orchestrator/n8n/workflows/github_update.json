@@ -1,0 +1,67 @@
+{
+  "name": "GitHub Update Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "github_update",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "webhook-node",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "webhookId": "github_update"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Extract data from webhook\nconst taskId = $input.first().json.task_id;\nconst role = $input.first().json.role;\nconst description = $input.first().json.description;\nconst content = $input.first().json.content;\n\n// Log the received data\nconsole.log('Received GitHub update task:', { taskId, role, description });\n\n// Format content for GitHub update\nconst githubUpdate = {\n  repository: 'company/product-repo',\n  action: 'create_release',\n  release_notes: content,\n  version: '1.0.0',\n  tag: 'v1.0.0',\n  draft: false\n};\n\nreturn {\n  task_id: taskId,\n  role: role,\n  description: description,\n  github_update: githubUpdate,\n  status: 'processed',\n  timestamp: new Date().toISOString()\n};"
+      },
+      "id": "function-node",
+      "name": "Process GitHub Content",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Simulate GitHub API interaction\nconst data = $input.first().json;\n\n// In a real implementation, this would connect to GitHub API\nconsole.log('Updating GitHub:', data.github_update);\n\n// Simulate API response\nconst response = {\n  success: true,\n  release_id: 'gh_' + Math.random().toString(36).substr(2, 9),\n  repository: data.github_update.repository,\n  version: data.github_update.version,\n  tag: data.github_update.tag,\n  created_at: new Date().toISOString(),\n  html_url: `https://github.com/${data.github_update.repository}/releases/tag/${data.github_update.tag}`,\n  assets: []\n};\n\nreturn {\n  ...data,\n  github_response: response,\n  execution_status: 'completed'\n};"
+      },
+      "id": "github-api",
+      "name": "Update GitHub",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [680, 300]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Process GitHub Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process GitHub Content": {
+      "main": [
+        [
+          {
+            "node": "Update GitHub",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {},
+  "versionId": "1"
+}
+

@@ -1,0 +1,67 @@
+{
+  "name": "Social Media Post Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "social_media_post",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "webhook-node",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "webhookId": "social_media_post"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Extract data from webhook\nconst taskId = $input.first().json.task_id;\nconst role = $input.first().json.role;\nconst description = $input.first().json.description;\nconst content = $input.first().json.content;\n\n// Log the received data\nconsole.log('Received social media task:', { taskId, role, description });\n\n// Format content for social media\nconst socialMediaPost = {\n  platform: 'twitter',\n  content: content.substring(0, 280), // Twitter character limit\n  hashtags: ['#launch', '#product', '#AI'],\n  scheduled: false\n};\n\nreturn {\n  task_id: taskId,\n  role: role,\n  description: description,\n  social_media_post: socialMediaPost,\n  status: 'processed',\n  timestamp: new Date().toISOString()\n};"
+      },
+      "id": "function-node",
+      "name": "Process Social Media Content",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Simulate posting to social media\nconst data = $input.first().json;\n\n// In a real implementation, this would connect to Twitter API, LinkedIn API, etc.\nconsole.log('Posting to social media:', data.social_media_post);\n\n// Simulate API response\nconst response = {\n  success: true,\n  post_id: 'sm_' + Math.random().toString(36).substr(2, 9),\n  platform: data.social_media_post.platform,\n  content: data.social_media_post.content,\n  posted_at: new Date().toISOString(),\n  engagement: {\n    likes: 0,\n    shares: 0,\n    comments: 0\n  }\n};\n\nreturn {\n  ...data,\n  social_media_response: response,\n  execution_status: 'completed'\n};"
+      },
+      "id": "social-media-api",
+      "name": "Post to Social Media",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [680, 300]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Process Social Media Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Social Media Content": {
+      "main": [
+        [
+          {
+            "node": "Post to Social Media",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {},
+  "versionId": "1"
+}
+

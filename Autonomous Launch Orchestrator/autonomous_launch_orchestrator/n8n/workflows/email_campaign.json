@@ -1,0 +1,67 @@
+{
+  "name": "Email Campaign Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "email_campaign",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "webhook-node",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "webhookId": "email_campaign"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Extract data from webhook\nconst taskId = $input.first().json.task_id;\nconst role = $input.first().json.role;\nconst description = $input.first().json.description;\nconst content = $input.first().json.content;\n\n// Log the received data\nconsole.log('Received email campaign task:', { taskId, role, description });\n\n// Format content for email campaign\nconst emailCampaign = {\n  subject: 'Exciting Product Launch Announcement!',\n  content: content,\n  recipients: ['customers@example.com', 'partners@example.com'],\n  template: 'launch_announcement',\n  scheduled: false\n};\n\nreturn {\n  task_id: taskId,\n  role: role,\n  description: description,\n  email_campaign: emailCampaign,\n  status: 'processed',\n  timestamp: new Date().toISOString()\n};"
+      },
+      "id": "function-node",
+      "name": "Process Email Content",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Simulate sending email campaign\nconst data = $input.first().json;\n\n// In a real implementation, this would connect to Mailchimp, SendGrid, etc.\nconsole.log('Sending email campaign:', data.email_campaign);\n\n// Simulate API response\nconst response = {\n  success: true,\n  campaign_id: 'email_' + Math.random().toString(36).substr(2, 9),\n  subject: data.email_campaign.subject,\n  recipients_count: data.email_campaign.recipients.length,\n  sent_at: new Date().toISOString(),\n  stats: {\n    delivered: data.email_campaign.recipients.length,\n    opened: 0,\n    clicked: 0,\n    bounced: 0\n  }\n};\n\nreturn {\n  ...data,\n  email_response: response,\n  execution_status: 'completed'\n};"
+      },
+      "id": "email-api",
+      "name": "Send Email Campaign",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [680, 300]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Process Email Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Email Content": {
+      "main": [
+        [
+          {
+            "node": "Send Email Campaign",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {},
+  "versionId": "1"
+}
+
